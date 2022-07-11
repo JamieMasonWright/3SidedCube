@@ -1,5 +1,6 @@
 package com.jj.a3sidedcube.fragments
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
 import android.view.View
@@ -10,6 +11,7 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.findNavController
 import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.recyclerview.widget.GridLayoutManager
@@ -17,14 +19,13 @@ import com.jj.a3sidedcube.R
 import com.jj.a3sidedcube.adapters.LoadingAdapter
 import com.jj.a3sidedcube.adapters.PokemonAdapter
 import com.jj.a3sidedcube.databinding.FragmentPokemonListBinding
+import com.jj.a3sidedcube.domain.PokemonResult
 import com.jj.a3sidedcube.utils.PRODUCT_VIEW_TYPE
 import com.jj.a3sidedcube.utils.toast
 import com.jj.a3sidedcube.viewmodels.PokemonListViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
-
-
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -33,15 +34,35 @@ class PokemonListFragment : Fragment(R.layout.fragment_pokemon_list) {
     private lateinit var binding: FragmentPokemonListBinding
     private val viewModel: PokemonListViewModel by viewModels()
     private var job: Job? = null
-    private val adapter = PokemonAdapter()
+    private val adapter = PokemonAdapter {pokemonResult: PokemonResult -> navigate(pokemonResult)  }
 
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         binding = FragmentPokemonListBinding.bind(view)
 
         setAdapter()
+
+
+
+        binding.searchView.setOnTouchListener { v, _ ->
+            v.isFocusableInTouchMode = true
+            false
+        }
+
+        binding.swipeRefreshLayout.setOnRefreshListener {
+            startFetchingPokemon(null, false)
+
+            binding.searchView.apply {
+                text = null
+                isFocusable = false
+
+            }
+            hideSoftKeyboard()
+
+        }
 
         binding.searchView.setOnEditorActionListener(TextView.OnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
@@ -54,6 +75,16 @@ class PokemonListFragment : Fragment(R.layout.fragment_pokemon_list) {
 
     }
 
+    private fun startFetchingPokemon(searchString: String?, isSubmitEmpty: Boolean) {
+        job?.cancel()
+        job = lifecycleScope.launch {
+            if(isSubmitEmpty) adapter.submitData(PagingData.empty())
+            viewModel.getAdverts(searchString).collectLatest {
+                adapter.submitData(it)
+            }
+        }
+    }
+
     private fun performSearch(searchString: String) {
         hideSoftKeyboard()
 
@@ -61,7 +92,7 @@ class PokemonListFragment : Fragment(R.layout.fragment_pokemon_list) {
             requireContext().toast("Search cannot be empty")
             return
         }
-        startFetchingPokemon(searchString)
+        startFetchingPokemon(searchString, true)
 
 
     }
@@ -94,16 +125,17 @@ class PokemonListFragment : Fragment(R.layout.fragment_pokemon_list) {
             footer = LoadingAdapter { retry() }
         )
 
-        startFetchingPokemon(null)
+        startFetchingPokemon(null, false)
 
         adapter.addLoadStateListener { loadState ->
-            if (loadState.refresh is LoadState.Loading
+            if (loadState.refresh is LoadState.Loading && adapter.snapshot().isEmpty()
             ) {
                 binding.progressCircular.isVisible = true
                 binding.textError.isVisible = false
 
-            } else {
+            }else{
                 binding.progressCircular.isVisible = false
+                binding.swipeRefreshLayout.isRefreshing = false
 
                 val error = when {
                     loadState.prepend is LoadState.Error -> loadState.prepend as LoadState.Error
@@ -123,27 +155,20 @@ class PokemonListFragment : Fragment(R.layout.fragment_pokemon_list) {
                 }
             }
         }
-
-
     }
 
     override fun onResume() {
         super.onResume()
-        hideSoftKeyboard()
-    }
-
-    private fun startFetchingPokemon(searchString: String?) {
-        job?.cancel()
-        job = lifecycleScope.launch {
-            adapter.submitData(PagingData.empty())
-            viewModel.getAdverts(searchString).collect {
-                adapter.submitData(it)
-            }
-        }
+        binding.searchView.isFocusable = false
     }
 
     private fun retry() {
         adapter.retry()
+    }
+
+    private fun navigate(pokemonResult: PokemonResult) {
+        binding.root.findNavController()
+            .navigate(PokemonListFragmentDirections.toPokemonStatsFragment(pokemonResult))
     }
 
 }

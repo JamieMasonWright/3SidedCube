@@ -4,11 +4,14 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="app/src/main/res/drawable/ic_basline_search.xml" value="0.1" />
+        <entry key="app/src/main/res/drawable/progress_bar_drawable.xml" value="0.1845" />
         <entry key="app/src/main/res/drawable/search_background.xml" value="0.1845" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.17708333333333334" />
         <entry key="app/src/main/res/layout/fragment_pokemon_list.xml" value="0.17604166666666668" />
+        <entry key="app/src/main/res/layout/fragment_pokemon_stats.xml" value="0.24084313370566884" />
         <entry key="app/src/main/res/layout/list_item_pokemon.xml" value="0.17604166666666668" />
         <entry key="app/src/main/res/layout/network_state_item.xml" value="0.17604166666666668" />
+        <entry key="app/src/main/res/layout/stat_item_pokemon.xml" value="0.17604166666666668" />
       </map>
     </option>
   </component>

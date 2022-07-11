@@ -15,10 +15,8 @@ class PokemonListViewModel @ViewModelInject constructor(private val pokemonRepos
     private var currentResult: Flow<PagingData<PokemonResult>>? = null
     fun getAdverts(searchString: String?): Flow<PagingData<PokemonResult>> {
         val newResult: Flow<PagingData<PokemonResult>> =
-            pokemonRepository.getPokemon(searchString).cachedIn(viewModelScope)
+            pokemonRepository.getPokemon(searchString)
         currentResult = newResult
         return newResult
     }
-
-    suspend fun getStats(id:Int) = pokemonRepository.getStats(id)
 }

@@ -4,15 +4,18 @@ import androidx.paging.PagingSource
 import com.jj.a3sidedcube.api.PokemonApi
 import com.jj.a3sidedcube.domain.PokemonResult
 import com.jj.a3sidedcube.domain.SinglePokemonResponse
+import com.jj.a3sidedcube.utils.SEARCH_LOAD_SIZE
 import com.jj.a3sidedcube.utils.STARTING_OFFSET_INDEX
-
 import java.io.IOException
 
 
 class PokemonDataSource(private val pokemonApi: PokemonApi, private val searchString: String?) :
     PagingSource<Int, PokemonResult>() {
+
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, PokemonResult> {
         val offset = params.key ?: STARTING_OFFSET_INDEX
+
+        val loadSize = if (searchString == null) params.loadSize else SEARCH_LOAD_SIZE
         return try {
             val data = pokemonApi.getPokemons(params.loadSize, offset)
             data.results.forEach {
@@ -28,8 +31,8 @@ class PokemonDataSource(private val pokemonApi: PokemonApi, private val searchSt
             }
             LoadResult.Page(
                 data = filteredData,
-                prevKey = if (offset == STARTING_OFFSET_INDEX) null else offset - params.loadSize,
-                nextKey = if (data.next == null) null else offset + params.loadSize
+                prevKey = if (offset == STARTING_OFFSET_INDEX) null else offset - loadSize,
+                nextKey = if (data.next == null) null else offset + loadSize
             )
         } catch (t: Throwable) {
             var exception = t

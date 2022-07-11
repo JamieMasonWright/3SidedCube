@@ -18,7 +18,7 @@ import com.jj.a3sidedcube.domain.PokemonResult
 import com.jj.a3sidedcube.utils.NETWORK_VIEW_TYPE
 import com.jj.a3sidedcube.utils.PRODUCT_VIEW_TYPE
 
-class PokemonAdapter :
+class PokemonAdapter(private val navigate: (PokemonResult) -> Unit) :
     PagingDataAdapter<PokemonResult, PokemonAdapter.ViewHolder>(
         PlayersDiffCallback()
     ) {
@@ -27,7 +27,7 @@ class PokemonAdapter :
 
         val data = getItem(position)!!
 
-        holder.bind(data)
+        holder.bind(data, navigate)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -40,15 +40,17 @@ class PokemonAdapter :
 
     }
 
-    class ViewHolder(
-        private val binding: ListItemPokemonBinding
-    ) : RecyclerView.ViewHolder(binding.root) {
+    class ViewHolder(private val binding: ListItemPokemonBinding) : RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(pokemonResult: PokemonResult) {
+        fun bind(pokemonResult: PokemonResult, navigate: (PokemonResult) -> Unit) {
 
             binding.apply {
                 pokemonItemTitle.text = pokemonResult.name
                 loadImage(this, pokemonResult)
+
+                root.setOnClickListener{
+                    navigate.invoke(pokemonResult)
+                }
             }
 
         }
