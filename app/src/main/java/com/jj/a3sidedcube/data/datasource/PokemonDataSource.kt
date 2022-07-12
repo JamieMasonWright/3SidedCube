@@ -17,6 +17,7 @@ class PokemonDataSource(private val pokemonApi: PokemonApi, private val searchSt
 
         val loadSize = if (searchString == null) params.loadSize else SEARCH_LOAD_SIZE
         return try {
+
             val data = pokemonApi.getPokemons(params.loadSize, offset)
             data.results.forEach {
                 val id = it.url.substringAfter("pokemon").replace("/", "").toInt()
